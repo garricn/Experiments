@@ -33,7 +33,7 @@ final class PhotoVC: UIViewController {
         NSLayoutConstraint.activate(
             [
                 imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                imageView.leadingAnchor.constraint(equalTo: view.trailingAnchor),
+                imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
                 imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
             ]
         )
