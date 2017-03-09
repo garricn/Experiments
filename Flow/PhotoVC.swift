@@ -8,7 +8,7 @@
 
 import UIKit
 
-final class PhotoVC: UIViewController {
+final class ViewPhotoVC: UIViewController {
     private let imageView = UIImageView()
     private let photo: Photo
     

@@ -27,15 +27,18 @@ final class FeedVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        configure
+        configure()
     }
 
-    private var configure: Void {
+    private func configure() {
         tableView.estimatedRowHeight = UIScreen.main.bounds.width
         tableView.rowHeight = UIScreen.main.bounds.width
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.register(FeedCell.self, forCellReuseIdentifier: FeedCell.reuseID)
+        tableView.register(
+            FeedCell.self,
+            forCellReuseIdentifier: FeedCell.reuseID
+        )
     }
 }
 

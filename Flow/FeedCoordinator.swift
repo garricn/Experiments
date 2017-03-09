@@ -12,24 +12,16 @@ class FeedCoordinator: Coordinating {
     weak var delegate: ChildCoordinatorDelegate?
     private(set) var rootViewController: UIViewController!
     
+    fileprivate var selectedPhoto: Photo?
     private var childCoordinators: [Coordinating] = []
     private let fetcher: Fetcher
-    
+
     init(service: Fetcher) {
         self.fetcher = service
     }
     
-    var start: Void {
+    func start() {
         fetcher.fetch(with: request, completion: completion)
-    }
-    
-    private var request: URLRequest {
-        let query = "https://api.flickr.com/services/rest/?method=flickr.galleries.getPhotos&api_key=\(Private.apiKey)&gallery_id=72157664540660544&format=json&nojsoncallback=1"
-        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
-        let url = URL(string: encoded)!
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        return request
     }
     
     private func completion(with json: [String: Any]) {
@@ -43,26 +35,75 @@ class FeedCoordinator: Coordinating {
         }
     }
     
+    // MARK: - Interactivity
+    
     @objc fileprivate func addButtonTapped() {
-        let addPhotoVC = resolvedAddPhotoVC(for: self)
-        let viewController = UINavigationController(rootViewController: addPhotoVC)
-        rootViewController.navigationController?.present(viewController, animated: true)
+        let addPhotoCoordinator = AddPhotoCoordinator()
+        addPhotoCoordinator.delegate = self
+        addPhotoCoordinator.start()
+        childCoordinators.append(addPhotoCoordinator)
     }
     
     @objc fileprivate func doneButtonTapped() {
         rootViewController.dismiss(animated: true)
     }
+    
+    @objc fileprivate func actionButtonTapped() {
+        guard let image = selectedPhoto?.image else { return }
+        
+        let activityViewController = UIActivityViewController(
+            activityItems: [image],
+            applicationActivities: nil
+        )
+        rootViewController.present(activityViewController, animated: true)
+    }
 }
+
+extension FeedCoordinator: ChildCoordinatorDelegate {
+    func childCoordinatorIsReady(childCoordinator: Coordinating) {
+        if let viewController = childCoordinator.rootViewController {
+            addDoneBarButtonItem(to: viewController)
+            let navigationController = UINavigationController(rootViewController: viewController)
+            rootViewController.present(navigationController, animated: true)
+        }
+    }
+}
+
+
+final class AddPhotoCoordinator: Coordinating {
+    weak var delegate: ChildCoordinatorDelegate?
+    var rootViewController: UIViewController!
+
+    func start() {
+        rootViewController = AddPhotoVC()
+        rootViewController.view.backgroundColor = .yellow
+        delegate?.childCoordinatorIsReady(childCoordinator: self)
+    }
+}
+
+
+
+
+
+
+
+
+
 
 extension FeedCoordinator: FeedDelegate {
     func didSelect(_ photo: Photo) {
-        let photoVC = PhotoVC(photo: photo)
-        photoVC.navigationItem.title = photo.photoID
-        addDoneBarButtonItem(to: photoVC)
-        let navigationController = UINavigationController(rootViewController: photoVC)
+        selectedPhoto = photo
+        
+        let viewPhotoVC = ViewPhotoVC(photo: photo)
+        viewPhotoVC.navigationItem.title = photo.photoID
+        
+        addDoneBarButtonItem(to: viewPhotoVC)
+        addActionBarButtonItem(to: viewPhotoVC)
+        
+        let navigationController = UINavigationController(rootViewController: viewPhotoVC)
+
         rootViewController.present(navigationController, animated: true)
     }
-    
 }
 
 extension FeedCoordinator: AddPhotoDelegate {}
@@ -71,10 +112,13 @@ extension FeedCoordinator: AddPhotoDelegate {}
 
 extension FeedCoordinator {
     fileprivate func resolvedFeedVC(for delegate: FeedDelegate, withItems items: [Photo]) -> FeedVC {
+        
         let viewModel = FeedVM(items: items)
+        
         viewModel.delegate = delegate
         
         let feedVC = FeedVC(viewModel: viewModel)
+        
         let rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .add,
             target: self,
@@ -91,24 +135,35 @@ extension FeedCoordinator {
         addDoneBarButtonItem(to: addPhotoVC)
         return addPhotoVC
     }
-    
+}
+
+// MARK: - Helpers
+
+extension FeedCoordinator {
     fileprivate func addDoneBarButtonItem(to viewController: UIViewController) {
         let buttomItem = UIBarButtonItem(
             barButtonSystemItem: .done,
             target: self,
             action: #selector(doneButtonTapped)
         )
-        viewController.navigationItem.leftBarButtonItem = buttomItem
+        viewController.navigationItem.rightBarButtonItem = buttomItem
     }
-}
-
-protocol AddPhotoDelegate: class {}
-
-final class AddPhotoVC: UIViewController {
-    weak var delegate: AddPhotoDelegate?
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .white
+    fileprivate func addActionBarButtonItem(to viewController: UIViewController) {
+        let item = UIBarButtonItem(
+            barButtonSystemItem: .action,
+            target: self,
+            action: #selector(actionButtonTapped)
+        )
+        viewController.navigationItem.leftBarButtonItem = item
+    }
+    
+    fileprivate var request: URLRequest {
+        let query = "https://api.flickr.com/services/rest/?method=flickr.galleries.getPhotos&api_key=\(Private.apiKey)&gallery_id=72157664540660544&format=json&nojsoncallback=1"
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
+        let url = URL(string: encoded)!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        return request
     }
 }

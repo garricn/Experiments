@@ -9,7 +9,7 @@
 import UIKit
 
 protocol Coordinating {
-    var start: Void { get }
+    func start()
     var rootViewController: UIViewController! { get }
     weak var delegate: ChildCoordinatorDelegate? { get set }
 }

@@ -16,14 +16,15 @@ final class AppCoordinator {
         guard launchOptions == nil else {
             fatalError("LaunchOptions is not nil. Handle launch options in \(#function).")
         }
-        return startFeed
+        return startFeed()
     }
     
-    private var startFeed: UIViewController {
+    private func startFeed() -> UIViewController {
+        
         let fetcher = Fetcher()
         let feedCoordinator = FeedCoordinator(service: fetcher)
         feedCoordinator.delegate = self
-        feedCoordinator.start
+        feedCoordinator.start()
         childCoordinators.append(feedCoordinator)
         
         let initialViewController = LoadingVC()
