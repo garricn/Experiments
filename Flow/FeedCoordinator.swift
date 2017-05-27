@@ -81,15 +81,6 @@ final class AddPhotoCoordinator: Coordinating {
     }
 }
 
-
-
-
-
-
-
-
-
-
 extension FeedCoordinator: FeedDelegate {
     func didSelect(_ photo: Photo) {
         selectedPhoto = photo
